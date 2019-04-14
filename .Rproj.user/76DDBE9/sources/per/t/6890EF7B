@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1555180284104.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3203195388",
+    "id" : "6890EF7B",
+    "lastKnownWriteTime" : 1555183566,
+    "last_content_update" : 1555183566834,
+    "path" : "C:/Users/user/Desktop/studia/Data Science/Semestr 2/R_Advanced/Projekt/projekt.R",
+    "project_path" : "projekt.R",
+    "properties" : {
+        "cursorPosition" : "35,0",
+        "scrollLine" : "5",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
