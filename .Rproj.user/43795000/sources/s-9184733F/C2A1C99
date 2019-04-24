@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1556087382839.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1908276696",
+    "id" : "C2A1C99",
+    "lastKnownWriteTime" : 1556148984,
+    "last_content_update" : 1556148984161,
+    "path" : "~/GitHub/StockeR---R_Advanced_Project/yahoo_arch.r",
+    "project_path" : "yahoo_arch.r",
+    "properties" : {
+        "cursorPosition" : "63,82",
+        "scrollLine" : "30"
+    },
+    "relative_order" : 3,
+    "source_on_save" : true,
+    "source_window" : "",
+    "type" : "r_source"
+}
