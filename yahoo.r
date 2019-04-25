@@ -1,20 +1,20 @@
-# setwd("C:/Users/grzeg/Desktop/studia/Semestr 2/Advanced_R/R_Advanced_Project")
+setwd("C:/Users/grzeg/Desktop/studia/Semestr 2/Advanced_R/R_Advanced_Project")
 
 ## The apikey shouldn't be visible in the function (maybe in this case it is not so crucial cause
 ## this API is completely free and its just email to get it) anyway API should be hidden somewhere
 ## my idea is to create pathToApi in function options. However i will complete this later.  
 
-# txt <- suppressWarnings(readLines("Alpha_Vantage_API.txt"))
+txt <- suppressWarnings(readLines("Alpha_Vantage_API.txt"))
 
 
-get_yah <- function(ticker, start_date, end_date, apikey){
+get_yah <- function(tickers, start_date, end_date, apikey){
   
   ## This part of code deals with extracting data from yahoo
-  ## The idea is to insert the ticker Code (ticker variable) into getSymbols. However it will only work if the code is correct
-  ## If it is not the error functions handles it, using API which uses the user's input to get short list of companies' names/tickers 
+  ## The idea is to insert the tickers Code (tickers variable) into getSymbols. However it will only work if the code is correct
+  ## If it is not the error functions handles it, using API which uses the user's input to get short list of companies' names/tickerss 
   ## which are closest to the user's initial input
   
-  for (tick in ticker){
+  for (tick in tickers){
     if (exists("lyst") == F) {
       lyst = list()
     }
@@ -34,14 +34,14 @@ get_yah <- function(ticker, start_date, end_date, apikey){
         if (length(symb$bestMatches) != 0){
           alternative_symbols <- as.data.frame(symb)
           alternative_symbols <- alternative_symbols[,c(2,1)]
-          colnames(alternative_symbols) <- c("Company Name", "Tickers")
-          message(paste0("Sorry, the company name or its ticker you have provided is not correct.", 
+          colnames(alternative_symbols) <- c("Company Name", "tickerss")
+          message(paste0("Sorry, the company name or its tickers you have provided is not correct.", 
                          "\n", 
-                         "Below is the list with Company Names/ Tickers which are closest", "\n", 
+                         "Below is the list with Company Names/ tickerss which are closest", "\n", 
                          " to what you have inserted into function"))
           print(alternative_symbols)
           
-          message(paste0("\n","Please choose the correct ticker with the number attached to it.","\n",
+          message(paste0("\n","Please choose the correct tickers with the number attached to it.","\n",
                          "If you want to exit the function insert 0."))
           
           x <- readline(prompt = "Enter the number: ")
@@ -57,7 +57,7 @@ get_yah <- function(ticker, start_date, end_date, apikey){
           }
         }
         else{
-          warning(paste("Sorry we couldn't recognize the ticker you have provided: ",tick,". It was ommited"))
+          warning(paste("Sorry we couldn't recognize the tickers you have provided: ",tick,". It was ommited"))
         }
         
       }, 
@@ -73,7 +73,7 @@ get_yah <- function(ticker, start_date, end_date, apikey){
   
   
   dx <- as.data.frame(lyst)
-  company_ticker <- names(lyst)
+  company_tickers <- names(lyst)
   
   
   lyst <- list()
@@ -86,7 +86,7 @@ get_yah <- function(ticker, start_date, end_date, apikey){
     }
   }
   dx <- dx %>% select(c(unlist(lyst)))
-  colnames(dx) <- company_ticker
+  colnames(dx) <- company_tickers
   
   
   return(dx)
@@ -95,8 +95,71 @@ get_yah <- function(ticker, start_date, end_date, apikey){
 }
 
 
-get_data <- function(ticker, start_date = "2019-01-01", end_date = "2019-01-26", 
-                     apikey = "ZFCGYJRLIXJQYHXB", measures, plot = 0){
+get_crypto <- function(tickers, start_date, end_date){
+  
+  if (!require("quantmod")) {
+    install.packages("quantmod")
+  }
+  if(!require("httr")) {
+    install.packages("httr")
+  }
+  if(!require("jsonlite")) {
+    install.packages("jsonlite")
+  }
+  if(!require("anytime")) {
+    install.packages("anytime")
+  }
+  
+  start_date_num <- as.numeric(as.POSIXct(start_date, tz="GMT"))
+  end_date_num <- as.numeric(as.POSIXct(end_date, tz="GMT"))
+  seconds_in_day <- 60*60*24
+  number_of_days <- (end_date_num - start_date_num)/seconds_in_day+1
+  max_query_size <- 2000
+  
+  output <- data.frame()
+  
+  for (ticker in tickers){
+    
+    ticker_output <- data.frame()
+    query_end_date <- end_date_num
+    
+    for (i in 1:ceiling(number_of_days/max_query_size)){
+      query_end_date <- end_date_num - ((i-1)*max_query_size*seconds_in_day)
+      query_limit <- min((query_end_date-start_date_num)/seconds_in_day, max_query_size)
+      query <- paste("https://min-api.cryptocompare.com/data/histoday?fsym=", ticker, "&tsym=USD&limit=", query_limit, "&e=CCCAGG&toTs=", query_end_date, sep = "")
+      result_from_query <- fromJSON(query)
+      if (result_from_query$Response != "Error"){
+        data <- result_from_query$Data[, c("time", "close")]
+        data$time <- anydate(data$time, tz="GMT")
+        data$close[data$close==0] <- NA
+        ticker_output <- rbind(ticker_output, data)
+      }
+    }
+    
+    if (length(ticker_output)!=0){
+      ticker_output <- unique(ticker_output)
+      ticker_output <- ticker_output[order(ticker_output$time),] 
+      rownames(ticker_output) <- ticker_output$time
+      ticker_output$time <- NULL
+      colnames(ticker_output) <- ticker
+      if (length(output)==0){
+        output <- ticker_output
+      } else{
+        output <- merge(output, ticker_output, by="row.names",all.x=TRUE)
+        rownames(output) <- output$Row.names
+        output$Row.names <- NULL
+      }
+    }
+    
+  }
+  return(output)
+  
+}
+
+
+
+get_data <- function(tickers, type, start_date = Sys.Date()-365, end_date=Sys.Date(), 
+                     apikey = "ZFCGYJRLIXJQYHXB", measures = NULL, plot = 0){
 
   if (!require("quantmod")) {
     install.packages("quantmod")
@@ -112,30 +175,47 @@ get_data <- function(ticker, start_date = "2019-01-01", end_date = "2019-01-26",
   }
   
   
-  ## getting data about stock prices from yahoo
-  stock_prices <- get_yah(ticker, start_date, end_date)
-  ##
+  returns <- list()
+  
+  if("stocks" %in% type){
+    ## getting data about stock prices from yahoo
+    tickers_stocks <- tickers[[which(type == "stocks")]]
+    stock_prices <- get_yah(tickers_stocks, start_date, end_date, apikey)
+    returns[["stocks"]] <- stock_prices
+    ##
+  }
+  
+  if("crypto" %in% type){
+    tickers_crypto <- tickers[[which(type == "crypto")]]
+    crypto_prices <- get_crypto(tickers_crypto, start_date, end_date)
+    returns[["crypto"]] <- crypto_prices
+  }
   
   
   ## Measures for stocks. It looks short and easy but it is actually pretty complicated. 
   ## Few operations wrapped.
   ### Defining mode function
-  if ("mode" %in% measures){
-    mode <- function(v) {
-      uniqv <- unique(round(v))
-      uniqv[which.max(tabulate(match(v, uniqv)))]
+  
+  if(exists("measures") == T){
+    if ("mode" %in% measures){
+      mode <- function(v) {
+        uniqv <- unique(round(v))
+        uniqv[which.max(tabulate(match(v, uniqv)))]
+      }
     }
+    ###
+    measures_func <- function(y){
+      list(sapply(measures, function(x){
+        get(x)(y)
+      }))
+    }
+    
+    stock_measures <- as.data.frame(sapply(stock_prices, measures_func))
+    crypto_measures <- as.data.frame(sapply(crypto_prices, measures_func))
+    returns[["stock_measures"]] <- stock_measures
+    returns[["crypto_measures"]] <- crypto_measures
+    ##
   }
-  ###
-  measures_func <- function(y){
-    list(sapply(measures, function(x){
-      get(x)(y)
-    }))
-  }
-  
-  stock_measures <- as.data.frame(sapply(stock_prices, measures_func))
-  ##
-  
   
   ## Line plot for prices
   if (plot == 1){
@@ -143,6 +223,11 @@ get_data <- function(ticker, start_date = "2019-01-01", end_date = "2019-01-26",
     if(!require("ggplot2")){
       install.packages("ggplot2")
     }
+    
+    if(!require("reshape2")){
+      install.packages("reshape2")
+    }
+    
     
     stock_prices["dates"] <- row.names(stock_prices)
     stock_prices["dates"] <- as.Date(stock_prices$dates, format = "%Y-%m-%d")
@@ -186,10 +271,15 @@ get_data <- function(ticker, start_date = "2019-01-01", end_date = "2019-01-26",
   ##
   
   
-  return(stock_prices)
+  return(returns)
   
 }
 
 
-stock_prices <- get_data(c("AAPL", "MSFT", "PYPL"), measures = c("mean", "max", "min", "median", "mode"), plot = 1)
+stock_prices <- get_data(list(c("AAPL", "MSFT", "PYPL"), c("BTC", "ETH")), 
+                         type = c("stocks", "crypto"), 
+                         measures = c("mean", "median", "max", "min", "mode"), plot = 1)
+
+
+
 
