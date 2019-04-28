@@ -1,5 +1,3 @@
-setwd("C:/Users/grzeg/Desktop/studia/Semestr 2/Advanced_R/R_Advanced_Project")
-
 ## The apikey shouldn't be visible in the function (maybe in this case it is not so crucial cause
 ## this API is completely free and its just email to get it) anyway API should be hidden somewhere
 ## my idea is to create pathToApi in function options. However i will complete this later.  
@@ -159,7 +157,7 @@ get_crypto <- function(tickers, start_date, end_date){
 
 
 get_data <- function(tickers, type, start_date = Sys.Date()-365, end_date=Sys.Date(), 
-                     apikey = "ZFCGYJRLIXJQYHXB", measures = NULL, plot = 0){
+                     apikey = "ZFCGYJRLIXJQYHXB", measures = NULL, plot = 0, save = 0){
 
   if (!require("quantmod")) {
     install.packages("quantmod")
@@ -229,57 +227,111 @@ get_data <- function(tickers, type, start_date = Sys.Date()-365, end_date=Sys.Da
     }
     
     
-    stock_prices["dates"] <- row.names(stock_prices)
-    stock_prices["dates"] <- as.Date(stock_prices$dates, format = "%Y-%m-%d")
-    
-    
-    numberOfDates <- as.Date(end_date) - as.Date(start_date)
-    
-    ### Those lines scale the x_axis labels to make the output readable
-    if (numberOfDates >= 90){
-      by <- "1 month"
+    lineplot_data <- c()
+    barplot_data <- c()
+    for (name in names(returns)){
+      if (name == "crypto" | name == "stocks"){
+        lineplot_data <- c(lineplot_data,name)
+      }
+      else{
+        barplot_data <- c(barplot_data, name)
+      }
     }
     
-    else if (numberOfDates < 90 & numberOfDates > 30){
-      by <- "1 week"
+    
+    for(name in lineplot_data){
+      # returns[[name]][["dates"]] <- row.names(returns[[name]])
+      returns[[name]][["dates"]] <- as.Date(row.names(returns[[name]]), format = "%Y-%m-%d")
+      
+      numberOfDates <- as.Date(end_date) - as.Date(start_date)
+      
+      ### Those lines scale the x_axis labels to make the output readable
+      if (numberOfDates >= 90){
+        by <- "1 month"
+      }
+      
+      else if (numberOfDates < 90 & numberOfDates > 30){
+        by <- "1 week"
+      }
+      
+      else {
+        by <- "3 days"
+      }
+      
+      line_plots <- lapply(names(returns[[name]][1:length(returns[[name]])-1]), 
+                           function(y) {ggplot(returns[[name]], aes(x = dates, y = get(y))) + 
+                               geom_line(group = 1) + 
+                               ggtitle(as.character(y)) + 
+                               ylab("price") +
+                               scale_x_date(breaks = seq(as.Date(start_date), 
+                                                         as.Date(end_date), by=by), 
+                                            date_labels = "%Y-%m-%d")})
+      
+      ### The for loop below is supposed to do the same task as the sapply after it. However
+      ### For some reasons this for loop doesn't produce all plots it should. 
+      
+      # for(i in range(1:length(line_plots))){
+      #   title <- line_plots[[i]][["labels"]][["title"]]
+      #   png(filename=paste0(title,"_line_plot.png"), width = 1600, height = 980 )
+      #   invisible(print(line_plots[[i]]))
+      #   dev.off()
+      # }
+      #
+      
+      sapply(line_plots, function(x){
+        title <- x[["labels"]][["title"]][1]
+        png(filename=paste0(title,"_line_plot.png"), width = 1600, height = 980 )
+        invisible(print(x))
+        dev.off()
+      })
+      
+      returns[[paste0(name,"_", "line_plots")]] <- line_plots
+      returns[[name]][["dates"]] <- NULL
+      
+      
     }
     
-    else {
-      by <- "3 days"
+    for(name in barplot_data){
+      ## Measure barplots
+      
+      mtab <- melt(as.matrix(returns[[name]]))
+      measure_plots <- ggplot(data = mtab, aes(x= Var1, y = value, fill = Var1)) + 
+        geom_bar(stat = "identity") +
+        scale_fill_viridis_d() +
+        facet_grid(. ~ Var2) + 
+        labs(fill = "Measures") + 
+        theme(axis.title.x = element_blank())
+      
+      if(save == 1){
+        ggsave(paste0(name,"_", "barplot",".png"),plot = measure_plots)
+      }
+      
+      returns[[paste0(name,"_", "barplot")]] <- measure_plots
     }
-    line_plots <- lapply(names(stock_prices[1:length(stock_prices)-1]), 
-                         function(y) {ggplot(stock_prices, aes(x = dates, y = get(y))) + 
-                             geom_line(group = 1) + 
-                             ggtitle(as.character(y)) + 
-                             ylab("price") +
-                             scale_x_date(breaks = seq(as.Date(start_date), 
-                                                       as.Date(end_date), by=by), 
-                                                       date_labels = "%Y-%m-%d")})
     
-    ## Measure barplots
-    stock_prices["dates"] <- NULL
-    mtab <- melt(as.matrix(stock_measures))
-    measure_plots <- ggplot(data = mtab, aes(x= Var1, y = value, fill = Var1)) + 
-                            geom_bar(stat = "identity") +
-                            scale_fill_viridis_d() +
-                            facet_grid(. ~ Var2) + 
-                            labs(fill = "Measures") + 
-                            theme(axis.title.x = element_blank())
-    print(line_plots)            
-    print(measure_plots)
+    
   }
   ##
   
+  ## Saving all data_frames to csv
+  if(save == 1){
+    for (name in names(returns)){
+      if (class(returns[[name]]) == "data.frame"){
+        write.csv(returns[name],paste0(name,".csv"))
+      }
+    }
+  }
   
+  
+  ## Returning the full output of the function
   return(returns)
   
 }
 
 
-stock_prices <- get_data(list(c("AAPL", "MSFT", "PYPL"), c("BTC", "ETH")), 
+results <- get_data(list(c("AAPL", "MSFT", "PYPL"), c("BTC", "ETH")), 
                          type = c("stocks", "crypto"), 
-                         measures = c("mean", "median", "max", "min", "mode"), plot = 1)
-
+                         measures = c("mean", "median", "max", "min", "mode"), plot = 1, save = 1)
 
 
 
