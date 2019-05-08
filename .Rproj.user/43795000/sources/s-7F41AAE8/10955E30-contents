@@ -403,9 +403,5 @@ get_data <- function(tickers, type, start_date = Sys.Date()-365, end_date=Sys.Da
 }
 
 
-# results <- get_data(list(c("AAPL", "MSFT", "PYPL"), c("BTC", "ETH")), 
-#                          type = c("stocks", "crypto"), 
-#                          measures = c("mean", "median", "max", "min", "mode"), plot = 1, save = 1)
-
 
 

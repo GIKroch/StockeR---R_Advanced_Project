@@ -1,0 +1,21 @@
+library(purrr)
+CoinNamesList <- map(result_from_query$Data, 'CoinName')
+library (plyr)
+CoinNamesDf <- ldply(CoinNamesList, data.frame)
+colnames(CoinNamesDf) <- c("Symbol", "CoinName")
+
+CoinSymbolsDf <- data.frame(CoinNamesDf$Symbol, CoinNamesDf$Symbol)
+colnames(CoinSymbolsDf) <- c("Symbol", "CoinName")
+
+CoinNamesDf <- rbind(CoinNamesDf, CoinSymbolsDf)
+
+library(stringdist)
+
+CoinNamesDf$Symbol[amatch("ETF", CoinNamesDf$CoinName, maxDist=Inf)]
+
+
+
+stock_prices <- get_data(list(c("AAPL", "MSFT", "PYPL"), c("Bitcoin", "ETH", "XRP", "there_is_no_chance_it_will_be_working")),
+                        type = c("stocks", "crypto"),
+                        measures = c("mean", "median", "max", "min", "mode"), plot = 1)
+YYN
