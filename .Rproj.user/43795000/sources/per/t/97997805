@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1557599132886.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "772169711",
+    "id" : "97997805",
+    "lastKnownWriteTime" : 1557701422,
+    "last_content_update" : 1557701422410,
+    "path" : "~/GitHub/StockeR---R_Advanced_Project/main_func.R",
+    "project_path" : "main_func.R",
+    "properties" : {
+        "cursorPosition" : "27,95",
+        "scrollLine" : "6",
+        "tempName" : "Untitled2"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

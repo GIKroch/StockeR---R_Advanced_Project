@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1557599125929.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "379|29|385|0|\n",
+    "hash" : "3840670832",
+    "id" : "54641998",
+    "lastKnownWriteTime" : 1557701400,
+    "last_content_update" : 1557701400054,
+    "path" : "~/GitHub/StockeR---R_Advanced_Project/analysis.R",
+    "project_path" : "analysis.R",
+    "properties" : {
+        "cursorPosition" : "65,4",
+        "scrollLine" : "43",
+        "tempName" : "Untitled2"
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

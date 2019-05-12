@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1557599126888.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2376053637",
+    "id" : "280E972F",
+    "lastKnownWriteTime" : 1557701194,
+    "last_content_update" : 1557701194203,
+    "path" : "~/GitHub/StockeR---R_Advanced_Project/download_data.r",
+    "project_path" : "download_data.r",
+    "properties" : {
+        "cursorPosition" : "269,2",
+        "scrollLine" : "258"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

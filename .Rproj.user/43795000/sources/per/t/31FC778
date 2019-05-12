@@ -1,0 +1,29 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1557689419798.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "31FC778",
+    "lastKnownWriteTime" : 8314605277356060015,
+    "last_content_update" : 1557689419798,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "cacheKey" : "F2F4D6FD",
+        "caption" : "crypto_prices",
+        "contentUrl" : "grid_resource/gridviewer.html?env=_rs_no_env&obj=crypto_prices&cache_key=F2F4D6FD",
+        "displayedObservations" : 5245,
+        "environment" : "_rs_no_env",
+        "object" : "crypto_prices",
+        "preview" : 0,
+        "totalObservations" : 5245,
+        "variables" : 3
+    },
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_dataframe"
+}
