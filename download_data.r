@@ -55,14 +55,22 @@ get_yah <- function(tickers, start_date, end_date, apikey){
           if (x == 0) print("See you again")
           
           else {
-            tick <- alternative_symbols[x,2]
-            values <- c(suppressMessages(getSymbols(as.character(tick), src = "yahoo",
-                                             verbose =  F,
-                                             auto.assign = FALSE, from = as.Date(start_date), to = as.Date(end_date))))
+            if(exists("new_ticks") == F){
+              new_ticks <<- list()
+            }
+            new_tick <- alternative_symbols[x,2]
+            new_ticks[[tick]] <<- new_tick
+            values <- c(suppressMessages(getSymbols(as.character(new_tick), src = "yahoo",
+                                                    verbose =  F,
+                                                    auto.assign = FALSE, from = as.Date(start_date), to = as.Date(end_date))))
           }
         }
         else{
           warning(paste("Sorry we couldn't recognize the tickers you have provided: ",tick,". It was ommited"))
+          if(exists("wrong_tickers") == F){
+            wrong_tickers <<- c()
+          }
+          wrong_tickers <<- c(wrong_tickers, tick)
           # KK: JEŚLI JEST JAKIŚ BŁĄD, TO POTEM FUNKCJA NIE MOŻE PRZYPISAĆ NAZW KOLUMN POPRAWNIE (colnames(dx) <- company_tickers) - TO JEST DO POPRAWKI
         }
         
@@ -75,8 +83,28 @@ get_yah <- function(tickers, start_date, end_date, apikey){
     }
     lyst[[tick]] <- err(tick)
 
-}
+  }
   
+  ## Dealing with an issue which broke the function when warning in get_yah occured
+  if(exists("wrong_tickers") == T){
+    wrong_tickers <- unique(wrong_tickers)
+    for (name in names(lyst)){
+      if (name %in% wrong_tickers){
+        lyst[[name]] <- NULL
+      }
+    }
+    remove(wrong_tickers, envir = globalenv())
+  }
+  
+  ## Dealing with an issue which assigned wrong ticker_names to the output when user used our autocorrection machine in error func
+  if(exists("new_ticks") == T){
+    for (name in names(lyst)){
+      if (name %in% names(new_ticks)){
+        names(lyst)[match(name, names(lyst))] <- new_ticks[[name]][1]
+      }
+    }
+    remove(new_ticks, envir = globalenv())
+  }
   
   dx <- as.data.frame(lyst)
   company_tickers <- names(lyst)

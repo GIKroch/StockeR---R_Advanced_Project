@@ -1,0 +1,140 @@
+## This part of code deals with extracting data from yahoo
+## The idea is to insert the tickers Code (tickers variable) into getSymbols. However it will only work if the code is correct
+## If it is not the error functions handles it, using API which uses the user's input to get short list of companies' names/tickerss 
+## which are closest to the user's initial input
+get_yah <- function(tickers, start_date = Sys.Date()-365, end_date=Sys.Date(), apikey = "ZFCGYJRLIXJQYHXB"){
+  
+  ## The apikey shouldn't be visible in the function (maybe in this case it is not so crucial cause
+  ## this API is completely free and its just email to get it) anyway API should be hidden somewhere
+  ## my idea is to create pathToApi in function options. However i will complete this later. 
+  
+  if (!require("quantmod")) {
+    install.packages("quantmod")
+  }
+  if(!require("httr")) {
+    install.packages("httr")
+  }
+  if(!require("jsonlite")) {
+    install.packages("jsonlite")
+  }
+  
+  if(!require("dplyr")){
+    install.packages("dplyr")
+  }
+  
+  for (tick in tickers){
+    if (exists("lyst") == F) {
+      lyst = list()
+    }
+    
+    err <- function(tick){
+      out <- tryCatch(
+        values <- c(suppressWarnings(getSymbols(as.character(tick), src = "yahoo",
+                                                verbose = F,
+                                                auto.assign = FALSE, from = as.Date(start_date), 
+                                                to = as.Date(end_date))))
+        , 
+        error = function(e){
+          
+          symb <- suppressMessages(fromJSON(content(GET(paste("https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=",
+                                                              tick, "&apikey=",as.character(apikey), sep = "")), 
+                                                    "text"), flatten = T))
+          if (length(symb$bestMatches) != 0){
+            alternative_symbols <- as.data.frame(symb)
+            alternative_symbols <- alternative_symbols[,c(2,1)]
+            colnames(alternative_symbols) <- c("Company Name", "tickerss")
+            message(paste0("Sorry, the company name or its tickers you have provided is not correct.", 
+                           "\n", 
+                           "Below is the list with Company Names/ tickerss which are closest", "\n", 
+                           " to what you have inserted into function"))
+            print(alternative_symbols)
+            
+            message(paste0("\n","Please choose the correct tickers with the number attached to it.","\n",
+                           "If you want to exit the function insert 0."))
+            
+            x <- readline(prompt = "Enter the number: ")
+            
+            
+            if (x == 0) print("See you again")
+            
+            else {
+              if(exists("new_ticks") == F){
+                new_ticks <<- list()
+              }
+              new_tick <- alternative_symbols[x,2]
+              new_ticks[[tick]] <<- new_tick
+              values <- c(suppressMessages(getSymbols(as.character(new_tick), src = "yahoo",
+                                                      verbose =  F,
+                                                      auto.assign = FALSE, from = as.Date(start_date), to = as.Date(end_date))))
+            }
+          }
+          else{
+            warning(paste("Sorry we couldn't recognize the tickers you have provided: ",tick,". It was ommited"))
+            if(exists("wrong_tickers") == F){
+              wrong_tickers <<- c()
+            }
+            wrong_tickers <<- c(wrong_tickers, tick)
+            
+            # KK: JEŚLI JEST JAKIŚ BŁĄD, TO POTEM FUNKCJA NIE MOŻE PRZYPISAĆ NAZW KOLUMN POPRAWNIE (colnames(dx) <- company_tickers) - TO JEST DO POPRAWKI
+          }
+          
+        }, 
+        finally = function(f){
+          lyst[[tick]] <- values
+        }
+      )
+      return(out)
+    }
+    lyst[[tick]] <- err(tick)
+    
+  }
+  
+  
+  ## Dealing with an issue which broke the function when warning in get_yah occured
+  
+  if(exists("wrong_tickers") == T){
+    wrong_tickers <- unique(wrong_tickers)
+    for (name in names(lyst)){
+      if (name %in% wrong_tickers){
+        lyst[[name]] <- NULL
+      }
+    }
+    remove(wrong_tickers, envir = globalenv())
+  }
+  
+  
+  if(exists("new_ticks") == T){
+    for (name in names(lyst)){
+      if (name %in% names(new_ticks)){
+        names(lyst)[match(name, names(lyst))] <- new_ticks[[name]][1]
+      }
+    }
+    remove(new_ticks, envir = globalenv())
+  }
+  
+  
+  dx <- as.data.frame(lyst)
+  company_tickers <- names(lyst)
+  
+  lyst <- list()
+  i = 1
+  
+  for (colname in colnames(dx)){
+    if (grepl("Close", colname) == T){
+      lyst[i] <- colname
+      i = i + 1
+    }
+  }
+  dx <- dx %>% select(c(unlist(lyst)))
+  colnames(dx) <- company_tickers
+  
+  
+  return(dx)
+  
+  ## dx is the final output with stock prices
+}
+
+my_data2 <- get_yah(c("APPL", "MICROSOFT", "PYPL"))
+
+
+ 
